@@ -1,0 +1,18 @@
+{
+  "parser": "babel-eslint",
+  "extends": ["airbnb"],
+  "plugins": [
+    "babel",
+    "react-native"
+  ],
+  "env": {
+    "jest": true
+  },
+  "rules": {
+    "import/prefer-default-export": 0, // No. Actions can have just one action.
+    "react/jsx-filename-extension": 0, // React Native packager do not allow jsx files by design - https://github.com/facebook/react-native/commit/0893d07db197b4f78752f982abbc568c6c0c7419
+    "react/prop-types": 0, // Can't recognize prop types set through recompose.
+    "object-curly-newline": 0,
+    "function-paren-newline": 0,
+  }
+}

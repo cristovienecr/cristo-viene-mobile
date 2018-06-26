@@ -1,0 +1,8 @@
+{
+  "preset": "react-native",
+  "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",
+  "testPathDirs": ["<rootDir>/src"],
+  "testFileExtensions": ["js"],
+  "modulePaths": ["<rootDir>/src"],
+  "moduleFileExtensions": ["js"]
+}
