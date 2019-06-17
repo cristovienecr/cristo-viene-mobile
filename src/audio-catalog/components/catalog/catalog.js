@@ -1,13 +1,12 @@
 import React from 'react';
-import { compose, map, equals } from 'ramda';
-import { RefreshControl } from 'react-native';
+import { compose, equals } from 'ramda';
+import { RefreshControl, ListView } from 'react-native';
 import styled, { withTheme } from 'glamorous-native';
 import { Container, Content } from 'native-base';
 import { connectAudioCatalog } from '../../connectors';
 import PlaylistCard from './playlist-card';
 import CatalogHeader from './catalog-header';
 import NoAudiosMessage from '../no-audios-message';
-import { isNullOrEmpty } from '../../../helpers/check';
 import { NoNetworkMessage, connectNetworkStatus } from '../../../network';
 
 const CatalogBackground = styled(Container)((_, theme) => ({
@@ -15,26 +14,50 @@ const CatalogBackground = styled(Container)((_, theme) => ({
   paddingBottom: 10,
 }));
 
-const AsCard = playlist => <PlaylistCard key={playlist.id} playlist={playlist} />;
+const hasPlaylistChanged = (left, right) => left !== right;
+const AsCard = playlist => (
+  <PlaylistCard key={playlist.id} playlist={playlist} />
+);
 const renderContent = (playlists, refreshing, refresh) => {
-  if (!refreshing && isNullOrEmpty(playlists)) return <NoAudiosMessage retry={refresh} />;
-  return map(AsCard, playlists);
+  if (!refreshing && playlists.getRowCount() === 0) {
+    return <NoAudiosMessage retry={refresh} />;
+  }
+
+  return (
+    <ListView dataSource={playlists} renderRow={AsCard} enableEmptySections />
+  );
 };
 
 class AudioCatalog extends React.Component {
   constructor(props) {
     super();
-    this.state = { refreshing: props.isCatalogLoading };
+    const ds = new ListView.DataSource({
+      rowHasChanged: hasPlaylistChanged,
+    });
+    this.state = {
+      refreshing: props.isCatalogLoading,
+      datasource: ds.cloneWithRows(props.playlists || []),
+    };
     this.refresh = this.refresh.bind(this);
   }
 
   componentWillReceiveProps(props) {
-    if (props.isCatalogLoading === this.state.refreshing) return;
-    this.setState({ refreshing: props.isCatalogLoading });
+    if (props.isCatalogLoading !== this.state.refreshing) {
+      this.setState({ refreshing: props.isCatalogLoading });
+    }
+
+    if (props.playlists !== this.props.playlists) {
+      this.setState({
+        datasource: this.state.datasource.cloneWithRows(props.playlists),
+      });
+    }
   }
 
   shouldComponentUpdate(props, state) {
-    return !equals(this.props.playlists, props.playlists) || !equals(this.state, state);
+    return (
+      !equals(this.props.playlists, props.playlists) ||
+      !equals(this.state.refreshing, state.refreshing)
+    );
   }
 
   refresh() {
@@ -45,7 +68,6 @@ class AudioCatalog extends React.Component {
   }
 
   render() {
-    const { playlists } = this.props;
     return (
       <CatalogBackground>
         <CatalogHeader />
@@ -53,10 +75,17 @@ class AudioCatalog extends React.Component {
         <Content
           style={{ padding: 5 }}
           refreshControl={
-            <RefreshControl refreshing={this.state.refreshing} onRefresh={this.refresh} />
+            <RefreshControl
+              refreshing={this.state.refreshing}
+              onRefresh={this.refresh}
+            />
           }
         >
-          {renderContent(playlists, this.state.refreshing, this.refresh)}
+          {renderContent(
+            this.state.datasource,
+            this.state.refreshing,
+            this.refresh
+          )}
         </Content>
       </CatalogBackground>
     );
