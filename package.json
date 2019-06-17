@@ -8,7 +8,8 @@
     "start:android": "yarn react-native run-android",
     "test": "jest",
     "storybook": "storybook start -p 7007",
-    "postinstall": "patch-package"
+    "postinstall":
+      "patch-package && cd ./node_modules/react-native && scripts/ios-install-third-party.sh && cd third-party && cd $(ls | grep 'glog' | awk '{print $1}') && ./configure"
   },
   "dependencies": {
     "camelcase-keys": "4.1.0",
